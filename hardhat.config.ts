@@ -8,22 +8,13 @@ import "hardhat-gas-reporter";
 import "hardhat-tracer";
 
 const config: HardhatUserConfig = {
-    defaultNetwork: "hardhat",
+    defaultNetwork: "testnet",
     networks: {
-        bsc_testnet: {},
-        matic_testnet: {},
-        hardhat: {
-            forking: {
-                url: "http://127.0.0.1:8545",
-                enabled: true
-            },
-            mining: {
-                auto: true,
-                interval: 1000
-            },
-            accounts: {
-                accountsBalance: "10000000000000000000000000" // 10 000 000 ETH
-            }
+        hardhat: {},
+        testnet: {
+            url: "https://data-seed-prebsc-1-s1.binance.org:8545/",
+            chainId: 97,
+            gasPrice: 20000000000
         }
     },
     solidity: {
