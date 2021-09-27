@@ -1,0 +1,15 @@
+.env
+sensitive
+dist
+.vscode
+coverage
+dist
+logs
+node_modules
+.nyc_output
+cache
+artifacts
+typechain
+.pytest_cache
+abi/
+coverage.json

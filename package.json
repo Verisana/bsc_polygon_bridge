@@ -1,0 +1,75 @@
+{
+    "name": "bsc_polygon_bridge",
+    "version": "1.0.0",
+    "description": "",
+    "scripts": {
+        "compile": "hardhat compile",
+        "tsc": "tsc -w",
+        "test:hh": "hardhat test",
+        "test:b": "mocha 'test/**/*.test.ts'",
+        "coverage:hh": "hardhat coverage --testfiles \"test/contracts/**/*.test.ts\"",
+        "coverage:b": "nyc npm run test:b",
+        "style": "prettier --write 'src/**/*.{ts,test.ts,tsx,json,sol}'",
+        "lint": "eslint \"src/**/*.ts\" --fix"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Verisana/bsc_polygon_bridge.git"
+    },
+    "license": "ISC",
+    "dependencies": {
+        "@openzeppelin/contracts": "^4.3.2",
+        "@types/dotenv": "^8.2.0",
+        "decimal.js": "^10.3.1",
+        "dotenv": "^10.0.0",
+        "ethers": "^5.4.7",
+        "hardhat-tracer": "^1.0.0-alpha.6",
+        "ts-generator": "^0.1.1"
+    },
+    "devDependencies": {
+        "@istanbuljs/nyc-config-typescript": "^1.0.1",
+        "@nomiclabs/hardhat-ethers": "^2.0.2",
+        "@nomiclabs/hardhat-waffle": "^2.0.1",
+        "@typechain/ethers-v5": "^7.1.2",
+        "@typechain/hardhat": "^2.3.0",
+        "@types/chai": "^4.2.22",
+        "@types/diff": "^5.0.1",
+        "@types/mocha": "^9.0.0",
+        "@types/node": "^16.10.1",
+        "@typescript-eslint/eslint-plugin": "^4.31.2",
+        "@typescript-eslint/parser": "^4.31.2",
+        "chai": "^4.3.4",
+        "diff": "^3.5.0",
+        "eslint": "^7.32.0",
+        "eslint-config-airbnb-base": "^14.2.1",
+        "eslint-config-airbnb-typescript": "^14.0.0",
+        "eslint-config-prettier": "^8.3.0",
+        "eslint-plugin-import": "^2.24.2",
+        "eslint-plugin-prettier": "^4.0.0",
+        "ethereum-waffle": "^3.4.0",
+        "hardhat": "^2.6.4",
+        "hardhat-gas-reporter": "^1.0.4",
+        "mocha": "^7.2.0",
+        "nyc": "^15.1.0",
+        "prettier": "^2.4.1",
+        "prettier-plugin-solidity": "^1.0.0-beta.18",
+        "solidity-coverage": "^0.7.17",
+        "source-map-support": "^0.5.20",
+        "ts-node": "^10.2.1",
+        "tslib": "^1.14.1",
+        "typechain": "^5.1.2",
+        "typescript": "^4.4.3"
+    },
+    "mocha": {
+        "register": "ts-node/register",
+        "reporter": "list",
+        "colors": true,
+        "timeout": 20000
+    },
+    "prettier": {
+        "trailingComma": "none",
+        "tabWidth": 4,
+        "semi": true,
+        "singleQuote": false
+    }
+}
