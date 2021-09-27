@@ -1,3 +1,5 @@
+import { HardhatUserConfig } from "hardhat/config";
+
 import "@typechain/hardhat";
 import "@nomiclabs/hardhat-waffle";
 import "@nomiclabs/hardhat-ethers";
@@ -5,11 +7,12 @@ import "solidity-coverage";
 import "hardhat-gas-reporter";
 import "hardhat-tracer";
 
-export default {
+const config: HardhatUserConfig = {
     defaultNetwork: "hardhat",
     networks: {
+        bsc_testnet: {},
+        matic_testnet: {},
         hardhat: {
-            port: 8565,
             forking: {
                 url: "http://127.0.0.1:8545",
                 enabled: true
@@ -46,3 +49,5 @@ export default {
         outDir: "./dist/contracts/typechain"
     }
 };
+
+export default config;
