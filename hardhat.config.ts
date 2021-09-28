@@ -11,13 +11,6 @@ import * as dotenv from "dotenv";
 
 dotenv.config();
 
-function getEnvVariable(key: string): string {
-    const value = process.env[key];
-    if (value === undefined)
-        throw new Error(`You must set required env variable: ${key}`);
-    return value;
-}
-
 // Not really robust. User may set variable in wrong format. Need refactor later
 const mnemonic = getEnvVariable("WALLET_MNEMONIC").split(",").join(" ");
 
