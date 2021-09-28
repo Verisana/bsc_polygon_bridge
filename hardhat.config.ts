@@ -1,3 +1,5 @@
+import * as dotenv from "dotenv";
+
 import { HardhatUserConfig } from "hardhat/config";
 
 import "@typechain/hardhat";
@@ -7,7 +9,8 @@ import "solidity-coverage";
 import "hardhat-gas-reporter";
 import "hardhat-tracer";
 
-import * as dotenv from "dotenv";
+import { getEnvVariable } from "./src/utils/utils";
+import "./src/scripts/tasks";
 
 dotenv.config();
 
