@@ -7,14 +7,38 @@ import "solidity-coverage";
 import "hardhat-gas-reporter";
 import "hardhat-tracer";
 
+import * as dotenv from "dotenv";
+
+dotenv.config();
+
+function getEnvVariable(key: string): string {
+    const value = process.env[key];
+    if (value === undefined)
+        throw new Error(`You must set required env variable: ${key}`);
+    return value;
+}
+
+// Not really robust. User may set variable in wrong format. Need refactor later
+const mnemonic = getEnvVariable("WALLET_MNEMONIC").split(",").join(" ");
+
+const bscUrl = getEnvVariable("BSC_TESTNET_URL");
+const maticUrl = getEnvVariable("POLYGON_TESTNET_URL");
+
 const config: HardhatUserConfig = {
     defaultNetwork: "testnet",
     networks: {
         hardhat: {},
         testnet: {
-            url: "https://data-seed-prebsc-1-s1.binance.org:8545/",
-            chainId: 97,
-            gasPrice: 20000000000
+            url: bscUrl,
+            accounts: {
+                mnemonic
+            }
+        },
+        mumbai: {
+            url: maticUrl,
+            accounts: {
+                mnemonic
+            }
         }
     },
     solidity: {
