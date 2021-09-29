@@ -88,3 +88,17 @@ describe("Test NFT contract", () => {
                 await NFTContract.connect(addr1).ownerOf(tokenId)
             ).to.be.equal(addr2.address);
         });
+        it("approve and fail to use unapproved address to transferFrom", async () => {
+            await NFTContract.connect(addr1).approve(addr2.address, tokenId);
+            await expect(
+                NFTContract.connect(owner).transferFrom(
+                    addr1.address,
+                    addr2.address,
+                    tokenId
+                )
+            ).to.be.revertedWith(
+                "VM Exception while processing transaction: reverted " +
+                    "with reason string 'ERC721: transfer caller is not " +
+                    "owner nor approved"
+            );
+        });
