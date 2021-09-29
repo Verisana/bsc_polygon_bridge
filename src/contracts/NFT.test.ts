@@ -64,3 +64,11 @@ describe("Test NFT contract", () => {
                 "VM Exception while processing transaction: reverted with reason string 'ERC721Burnable: caller is not owner nor approved"
             );
         });
+        it("from approved account", async () => {
+            await NFTContract.connect(addr1).approve(addr2.address, tokenId);
+            await NFTContract.connect(addr2).burn(tokenId);
+            await expect(
+                NFTContract.connect(owner).ownerOf(tokenId)
+            ).to.be.revertedWith("ERC721: owner query for nonexistent token");
+        });
+    });
