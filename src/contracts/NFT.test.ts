@@ -44,3 +44,16 @@ describe("Test NFT contract", () => {
             );
         });
     });
+
+    describe("token burn method", () => {
+        beforeEach(async () => {
+            await NFTContract.connect(owner).mint(addr1.address);
+            tokenId = await NFTContract.tokenOfOwnerByIndex(addr1.address, 0);
+        });
+        it("from authorized account", async () => {
+            await NFTContract.connect(addr1).burn(tokenId);
+
+            await expect(
+                NFTContract.connect(owner).ownerOf(tokenId)
+            ).to.be.revertedWith("ERC721: owner query for nonexistent token");
+        });
