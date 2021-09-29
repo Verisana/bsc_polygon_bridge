@@ -34,3 +34,13 @@ describe("Test NFT contract", () => {
                 balanceBefore.add(1).toNumber()
             );
         });
+        it("revert from unauthorized account", async () => {
+            await expect(
+                NFTContract.connect(addr1).mint(addr1.address)
+            ).to.be.revertedWith(
+                "VM Exception while processing transaction: reverted with " +
+                    "reason string 'ERC721PresetMinterPauserAutoId: must" +
+                    " have minter role to mint'"
+            );
+        });
+    });
