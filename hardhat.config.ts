@@ -21,9 +21,13 @@ const bscUrl = getEnvVariable("BSC_TESTNET_URL");
 const maticUrl = getEnvVariable("POLYGON_TESTNET_URL");
 
 const config: HardhatUserConfig = {
-    defaultNetwork: "testnet",
+    defaultNetwork: "hardhat",
     networks: {
-        hardhat: {},
+        hardhat: {
+            mining: {
+                auto: true
+            }
+        },
         testnet: {
             url: bscUrl,
             accounts: {
@@ -52,7 +56,7 @@ const config: HardhatUserConfig = {
     },
     paths: {
         sources: "./src/contracts",
-        tests: "./test/contracts",
+        tests: "./src/contracts",
         cache: "./dist/contracts/cache",
         artifacts: "./dist/contracts/artifacts"
     },
