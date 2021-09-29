@@ -102,3 +102,15 @@ describe("Test NFT contract", () => {
                     "owner nor approved"
             );
         });
+        it("transfer available token", async () => {
+            await NFTContract.connect(addr1).transferFrom(
+                addr1.address,
+                addr2.address,
+                tokenId
+            );
+            expect(
+                await NFTContract.connect(owner).ownerOf(tokenId)
+            ).to.be.equal(addr2.address);
+        });
+    });
+});
