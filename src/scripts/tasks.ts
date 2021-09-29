@@ -66,11 +66,10 @@ task("mint_nft", "Mint 10 NFT tokens on specified network")
         ) => {
             // I assume that the contract is deployed by the first account. If not,
             // this section must be revisited
-            const [owner, ...accounts] = await hre.ethers.getSigners();
+            const [owner, account1] = await hre.ethers.getSigners();
 
             // If not provided, defaults to first account after owner
-            taskArgs.to =
-                taskArgs.to === "" ? accounts[0].address : taskArgs.to;
+            taskArgs.to = taskArgs.to === "" ? account1.address : taskArgs.to;
 
             taskArgs.currentNetwork =
                 taskArgs.currentNetwork === ""
