@@ -5,10 +5,8 @@
     "scripts": {
         "compile": "hardhat compile",
         "tsc": "tsc -w",
-        "test:hh": "hardhat test",
-        "test:b": "mocha 'test/**/*.test.ts'",
-        "coverage:hh": "hardhat coverage --testfiles \"test/contracts/**/*.test.ts\"",
-        "coverage:b": "nyc npm run test:b",
+        "test": "hardhat test",
+        "coverage": "hardhat coverage --testfiles \"src/contracts/**/*.test.ts\"",
         "style": "prettier --write 'src/**/*.{ts,test.ts,tsx,json,sol}'",
         "lint": "eslint \"src/**/*.ts\" --fix"
     },
