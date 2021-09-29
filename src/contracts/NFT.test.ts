@@ -72,3 +72,19 @@ describe("Test NFT contract", () => {
             ).to.be.revertedWith("ERC721: owner query for nonexistent token");
         });
     });
+    describe("token approve and transfer methods", () => {
+        beforeEach(async () => {
+            await NFTContract.connect(owner).mint(addr1.address);
+            tokenId = await NFTContract.tokenOfOwnerByIndex(addr1.address, 0);
+        });
+        it("approve and use approved account to transferFrom", async () => {
+            await NFTContract.connect(addr1).approve(addr2.address, tokenId);
+            await NFTContract.connect(addr2).transferFrom(
+                addr1.address,
+                addr2.address,
+                tokenId
+            );
+            expect(
+                await NFTContract.connect(addr1).ownerOf(tokenId)
+            ).to.be.equal(addr2.address);
+        });
