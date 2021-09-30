@@ -30,22 +30,23 @@ export async function mintNFTs(
     NFTContract: NFT,
     amount: number,
     owner: SignerWithAddress,
-    receiverAddress: string
+    receiverAddress: string,
+    isLogging: boolean = false
 ) {
     const isAllowedToMint = await NFTContract.hasRole(
         await NFTContract.MINTER_ROLE(),
         owner.address
     );
-    const mints = [];
     if (isAllowedToMint) {
-        for (let i = 0; i < amount; i += 1) {
-            mints.push(NFTContract.connect(owner).mint(receiverAddress));
-        }
-
         // It is awful design. Ideally, we must create mintMany() and
-        // it will do all cycle work for us in one transaction. Here we send
-        // "amount" transaction to mint()
-        await Promise.all(mints);
+        // it will do all cycle work for us in one transaction
+
+        for (let i = 0; i < amount; i += 1) {
+            // eslint-disable-next-line no-await-in-loop
+            await NFTContract.connect(owner).mint(receiverAddress);
+
+            if (isLogging) console.log(`Done ${i} mint`);
+        }
     } else {
         throw new Error(
             "Your NFT contract has been " +
