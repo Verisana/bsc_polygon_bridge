@@ -77,13 +77,18 @@ contract Bridge is
         whenNotPaused
     {
         _NFTContract.safeTransferFrom(msg.sender, address(this), tokenId);
-        require(_NFTContract.ownerOf(tokenId) == address(this));
+        require(
+            _NFTContract.ownerOf(tokenId) == address(this),
+            "Token can not be transferd"
+        );
 
         SwapDetail memory swapDetail = SwapDetail({
             sender: msg.sender,
             tokenId: tokenId,
             chainFrom: _chainFrom,
             chainTo: _chainTo,
+
+            // I don't understand the purpose of this nonce. I think it's redundant
             nonce: nonceStore[msg.sender],
             isValue: true
         });
@@ -95,6 +100,8 @@ contract Bridge is
             "eventHash must not be initialized"
         );
 
+        // I don't quite understand why we need to store this hash because tokenId
+        // is unique
         eventStore[eventHash] = swapDetail;
 
         emit InitSwap(
@@ -125,8 +132,16 @@ contract Bridge is
             nonce: nonce,
             isValue: true
         });
+
+        require(
+            _NFTContract.ownerOf(swapDetail.tokenId) == address(this),
+            "Token must be owned by Bridge"
+        );
+
         bytes32 eventHash = calculateHash(swapDetail);
 
+        // This check may be redundant because the token availability is
+        // checked previously
         require(
             isInEventStore(eventHash) == false,
             "eventHash must not be initialized"
