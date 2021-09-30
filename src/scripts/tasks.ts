@@ -68,3 +68,7 @@ task("mint_nft", "Mint 10 NFT tokens on specified network")
             );
         }
     );
+
+task("send_nft", "Send NFT tokens from one blockchain to another")
+    .addParam("from")
+    .addParam("to");
