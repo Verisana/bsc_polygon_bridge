@@ -4,9 +4,9 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import * as dotenv from "dotenv";
 
 import { getEnvVariable } from "../utils/utils";
-import { mintNFTs, getContract } from "../utils/blockchain_utils";
+import { getContract, mintNFTs } from "../utils/blockchain_utils";
 import { Bridge, NFT } from "../../dist/contracts/typechain";
-import { ChainName } from "../types";
+import { ChainName, ISwapDetail } from "../types";
 import { Validator } from "../validator";
 
 // Although dotenv.config() was called in hardhat.configs.ts, it must be called here too,
@@ -22,7 +22,7 @@ const polygonBridgeAddress = getEnvVariable("POLYGON_BRIDGE_ADDRESS");
 task("mint_nft", "Mint 10 NFT tokens on specified network")
     .addParam("amount", "The amount of NFT to mint", "10")
     .addParam(
-        "currentNetwork",
+        "currentnetwork",
         "The network name on which the contract has been deployed",
         ""
     )
@@ -39,117 +39,156 @@ task("mint_nft", "Mint 10 NFT tokens on specified network")
             // If not provided, defaults to first account after owner
             taskArgs.to = taskArgs.to === "" ? account1.address : taskArgs.to;
 
-            taskArgs.currentNetwork =
-                taskArgs.currentNetwork === ""
+            taskArgs.currentnetwork =
+                taskArgs.currentnetwork === ""
                     ? hre.network.name
-                    : taskArgs.currentNetwork;
+                    : taskArgs.currentnetwork;
+
+            let NFTAddress;
 
             // Polygon testnet
-            let NFTContract;
-            if (taskArgs.currentNetwork === "mumbai") {
+            if (taskArgs.currentnetwork === "mumbai") {
                 taskArgs.to = polygonBridgeAddress;
-                NFTContract = (await getContract(
-                    "NFT",
-                    polygonNFTAddress,
-                    hre
-                )) as NFT;
-
+                NFTAddress = polygonNFTAddress;
                 // Binance Smart Chain Testnet
-            } else if (taskArgs.currentNetwork === "testnet") {
-                NFTContract = (await getContract(
-                    "NFT",
-                    binanceNFTAddress,
-                    hre
-                )) as NFT;
+            } else if (taskArgs.currentnetwork === "testnet") {
+                NFTAddress = binanceNFTAddress;
             } else {
                 throw new Error("This task doesn't work on that network");
             }
-            mintNFTs(NFTContract, Number(taskArgs.amount), owner, taskArgs.to);
 
+            const NFTContract = (await getContract(
+                "NFT",
+                NFTAddress,
+                hre
+            )) as NFT;
+
+            await mintNFTs(
+                NFTContract,
+                Number(taskArgs.amount),
+                owner,
+                taskArgs.to,
+                true
+            );
             console.log(
                 `Minted ${taskArgs.amount} NFT tokens on ` +
-                    `${taskArgs.currentNetwork} for address: ${taskArgs.to}`
+                    `${taskArgs.currentnetwork} for address: ${taskArgs.to}`
             );
         }
     );
 
-task("swap_nft", "Swap NFT token from one blockchain to another")
-    .addParam("sender", "1")
-    .addParam("chainFrom", "0")
-    .addParam("tokenID", "")
+task("send_nft", "Send NFT token to Bridge contract from the source blockchain")
+    .addParam("sender", "The sender account number to use", "1")
+    .addParam("tokenid", "The tokenId of sending NFT token")
     .setAction(
         async (
-            taskArgs: Record<string, string>,
+            taskArgs: Record<string, unknown>,
             hre: HardhatRuntimeEnvironment
         ) => {
-            const accounts = await hre.ethers.getSigners();
+            let chainFrom;
 
-            const sender = accounts[Number(taskArgs.sender)];
-            const chainFrom = Number(taskArgs.chainFrom);
-            const chainTo = chainFrom === 0 ? 1 : 0;
+            let bridgeAddress;
+            let NFTAddress;
 
-            let bridgeAddressFrom = binanceBridgeAddress;
-            let NFTAddressFrom = binanceNFTAddress;
-
-            let bridgeAddressTo = polygonBridgeAddress;
-
-            if (chainFrom === ChainName.POLYGON) {
-                bridgeAddressFrom = polygonBridgeAddress;
-                NFTAddressFrom = polygonNFTAddress;
-
-                bridgeAddressTo = binanceBridgeAddress;
+            if (hre.network.name === "testnet") {
+                bridgeAddress = binanceBridgeAddress;
+                NFTAddress = binanceNFTAddress;
+                chainFrom = ChainName.BSC;
+            } else if (hre.network.name === "mumbai") {
+                bridgeAddress = polygonBridgeAddress;
+                NFTAddress = polygonNFTAddress;
+                chainFrom = ChainName.POLYGON;
+            } else {
+                throw new Error(
+                    `Wrong network ${hre.network.name} argument provided`
+                );
             }
 
-            const NFTContractFrom = (await getContract(
+            const accounts = await hre.ethers.getSigners();
+            const sender = accounts[Number(taskArgs.sender)];
+            const NFTContract = (await getContract(
                 "NFT",
-                NFTAddressFrom,
+                NFTAddress,
                 hre
             )) as NFT;
 
-            const BridgeContractFrom = (await getContract(
+            const BridgeContract = (await getContract(
                 "Bridge",
-                bridgeAddressFrom,
+                bridgeAddress,
                 hre
             )) as Bridge;
 
-            const BridgeContractTo = (await getContract(
-                "Bridge",
-                bridgeAddressTo,
-                hre
-            )) as Bridge;
-
-            const tokenId =
-                taskArgs.tokenId === ""
-                    ? await NFTContractFrom.tokenOfOwnerByIndex(
-                          sender.address,
-                          0
-                      )
-                    : hre.ethers.BigNumber.from(taskArgs.tokenId);
-
-            await NFTContractFrom.connect(sender).approve(
-                BridgeContractFrom.address,
+            const tokenId = hre.ethers.BigNumber.from(taskArgs.tokenid);
+            await NFTContract.connect(sender).approve(
+                BridgeContract.address,
                 tokenId
             );
             console.log(
-                `Approved ${tokenId} to ${BridgeContractFrom.address} ` +
+                `Approved ${tokenId} to ${BridgeContract.address} ` +
                     `from ${sender.address}`
             );
-            await BridgeContractFrom.connect(sender).initSwap(tokenId);
+            await BridgeContract.connect(sender).initSwap(tokenId);
+            const nonce = await BridgeContract.callStatic.nonceStore(
+                sender.address
+            );
             console.log(
                 `Token ${tokenId} was sent from ${sender.address}` +
-                    ` to Bridge ${chainFrom}`
+                    ` to Bridge ${chainFrom} with nonce ${nonce}`
             );
+        }
+    );
 
-            // The Redeem Phase start !!!
+task("redeem_nft", "Redeem NFT token from the second blockchain")
+    .addParam("sender", "The sender account number to use", "1")
+    .addParam("tokenid", "The tokenId of receiving NFT token")
+    .addParam("nonce", "The nonce of the initSwap transaction")
+    .setAction(
+        async (
+            taskArgs: Record<string, unknown>,
+            hre: HardhatRuntimeEnvironment
+        ) => {
+            let bridgeAddress: string;
+            let chainTo: number;
 
-            const validator = new Validator(accounts[0], BridgeContractFrom);
-            const event = await Validator.queryInitSwapEvent(
-                BridgeContractFrom
-            );
-            const swapDetail = Validator.createSwapDetail(event);
-            const signature = await validator.validateInitSwap(event);
+            if (hre.network.name === "testnet") {
+                bridgeAddress = binanceBridgeAddress;
+                chainTo = ChainName.BSC;
+            } else if (hre.network.name === "mumbai") {
+                bridgeAddress = polygonBridgeAddress;
+                chainTo = ChainName.POLYGON;
+            } else {
+                throw new Error(
+                    `Wrong network ${hre.network.name} argument provided`
+                );
+            }
 
-            await BridgeContractTo.connect(sender).redeemSwap(
+            const accounts = await hre.ethers.getSigners();
+
+            const sender = accounts[Number(taskArgs.sender)];
+
+            const nonce = Number(taskArgs.nonce);
+
+            const BridgeContract = (await getContract(
+                "Bridge",
+                bridgeAddress,
+                hre
+            )) as Bridge;
+
+            const tokenId = hre.ethers.BigNumber.from(taskArgs.tokenid);
+
+            const swapDetail: ISwapDetail = {
+                sender: sender.address,
+                tokenId,
+                chainFrom: chainTo === 0 ? 1 : 0,
+                chainTo,
+                nonce,
+                isValue: true
+            };
+
+            const validator = new Validator(accounts[0], BridgeContract);
+            const signature = await validator._validateInitSwap(swapDetail);
+
+            await BridgeContract.connect(sender).redeemSwap(
                 swapDetail.sender,
                 swapDetail.tokenId,
                 swapDetail.chainFrom,
