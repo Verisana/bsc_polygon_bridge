@@ -19,9 +19,17 @@ contract NFT is ERC721PresetMinterPauserAutoId {
      * - The caller must own `tokenId` or be an approved operator.
      * - And have MINTER_ROLE access
      */
-    function burn(uint256 tokenId) public override virtual onlyRole(MINTER_ROLE) {
+    function burn(uint256 tokenId)
+        public
+        virtual
+        override
+        onlyRole(MINTER_ROLE)
+    {
         //solhint-disable-next-line max-line-length
-        require(_isApprovedOrOwner(_msgSender(), tokenId), "ERC721Burnable: caller is not owner nor approved");
+        require(
+            _isApprovedOrOwner(_msgSender(), tokenId),
+            "ERC721Burnable: caller is not owner nor approved"
+        );
         _burn(tokenId);
     }
 }
