@@ -1,10 +1,10 @@
 import { task } from "hardhat/config";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 import * as dotenv from "dotenv";
 
 import { getEnvVariable } from "../utils/utils";
+import { mintNFTs } from "../utils/blockchain_utils";
 import { NFT } from "../../dist/contracts/typechain";
 
 // Although dotenv.config() was called in hardhat.configs.ts, it must be called here too,
@@ -15,34 +15,6 @@ const binanceNFTAddress = getEnvVariable("BSC_NFT_ADDRESS");
 const polygonNFTAddress = getEnvVariable("POLYGON_NFT_ADDRESS");
 
 const polygonBridgeAddress = getEnvVariable("POLYGON_BRIDGE_ADDRESS");
-
-async function mintNFTs(
-    NFTContract: NFT,
-    amount: number,
-    owner: SignerWithAddress,
-    receiverAddress: string
-) {
-    const isAllowedToMint = await NFTContract.hasRole(
-        "MINTER_ROLE",
-        owner.address
-    );
-    const mints = [];
-    if (isAllowedToMint) {
-        for (let i = 0; i < amount; i += 1) {
-            mints.push(NFTContract.mint(receiverAddress));
-        }
-
-        // It is awful design. Ideally, we must create mintMany() and
-        // it will do all cycle work for us in one transaction. Here we send
-        // "amount" transaction to mint()
-        await Promise.all(mints);
-    } else {
-        throw new Error(
-            "Your NFT contract on Polygon has been " +
-                "deployed by another account. Check addresses"
-        );
-    }
-}
 
 async function getNFTContract(
     address: string,
