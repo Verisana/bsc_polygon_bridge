@@ -2,7 +2,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { NFT } from "../../dist/contracts/typechain";
 
-export async function resetForkBlockchain(
+export async function resetBlockchain(
     hre: HardhatRuntimeEnvironment,
     nodeUrl?: string
 ) {

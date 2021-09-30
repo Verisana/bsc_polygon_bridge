@@ -5,7 +5,7 @@ import { ethers } from "ethers";
 
 import hre from "hardhat";
 import { deploy } from "../utils/deploy";
-import { resetForkBlockchain } from "../utils/utils";
+import { resetBlockchain } from "../utils/blockchain_utils";
 import { NFT } from "../../dist/contracts/typechain";
 
 dotenv.config();
@@ -19,7 +19,7 @@ describe("Test NFT contract", () => {
     let tokenId: ethers.BigNumber;
 
     beforeEach(async () => {
-        await resetForkBlockchain(hre);
+        await resetBlockchain(hre);
         [owner, addr1, addr2] = await ethersHRE.getSigners();
         NFTContract = (await deploy("NFT")) as NFT;
     });
