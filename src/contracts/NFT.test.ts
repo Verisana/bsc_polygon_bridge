@@ -21,7 +21,7 @@ describe("Test NFT contract", () => {
     beforeEach(async () => {
         await resetBlockchain(hre);
         [owner, addr1, addr2] = await ethersHRE.getSigners();
-        NFTContract = (await deploy("NFT")) as NFT;
+        NFTContract = (await deploy("NFT", owner)) as NFT;
     });
 
     describe("token minting method", () => {
