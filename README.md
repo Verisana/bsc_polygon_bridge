@@ -1,4 +1,4 @@
-# bsc_polygon_bridge - simple project to bridge creation between Binance Smart Chain nad Polygon
+# Bridge smart contract between Binance Smart Chain and Polygon
 
 ## Start
 
