@@ -140,6 +140,7 @@ contract Bridge is
 
         bytes32 eventHash = calculateHash(swapDetail);
 
+
         // This check may be redundant because the token availability is
         // checked previously
         require(
@@ -149,10 +150,12 @@ contract Bridge is
 
         eventStore[eventHash] = swapDetail;
 
+        bytes32 prefixedEventHash = ECDSA.toEthSignedMessageHash(eventHash);
+
         require(
             SignatureChecker.isValidSignatureNow(
                 this.owner(),
-                eventHash,
+                prefixedEventHash,
                 v,
                 r,
                 s
