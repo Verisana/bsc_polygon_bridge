@@ -36,14 +36,27 @@ export class Validator {
         };
     }
 
-    async validateInitSwap(
-        event: TypedEvent<EventType>
+    async _validateInitSwap(
+        swapDetail: ISwapDetail
     ): Promise<ethers.Signature> {
-        const swapDetail = Validator.createSwapDetail(event);
         const swapHash = await this._bridgeContract
             .connect(this._signer)
             .callStatic.calculateHash(swapDetail);
-        const signaturePlain = await this._signer.signMessage(swapHash);
+        const signaturePlain = await this._signer.signMessage(
+            ethers.utils.arrayify(swapHash)
+        );
         return ethers.utils.splitSignature(signaturePlain);
+    }
+
+    async validateInitSwap(
+        _event?: TypedEvent<EventType>
+    ): Promise<ethers.Signature> {
+        const event =
+            _event === undefined
+                ? await Validator.queryInitSwapEvent(this._bridgeContract)
+                : _event;
+
+        const swapDetail = Validator.createSwapDetail(event);
+        return this._validateInitSwap(swapDetail);
     }
 }
