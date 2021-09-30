@@ -50,26 +50,34 @@ describe("Test NFT contract", () => {
             await NFTContract.connect(owner).mint(addr1.address);
             tokenId = await NFTContract.tokenOfOwnerByIndex(addr1.address, 0);
         });
-        it("from authorized account", async () => {
-            await NFTContract.connect(addr1).burn(tokenId);
+        it("from Minter and if accessed authorized account", async () => {
+            await NFTContract.connect(owner).mint(owner.address);
+            tokenId = await NFTContract.tokenOfOwnerByIndex(owner.address, 0);
+
+            expect(
+                await NFTContract.connect(owner).ownerOf(tokenId)
+            ).to.be.equal(owner.address);
+
+            await NFTContract.connect(owner).burn(tokenId);
 
             await expect(
                 NFTContract.connect(owner).ownerOf(tokenId)
             ).to.be.revertedWith("ERC721: owner query for nonexistent token");
         });
-        it("from unauthorized account", async () => {
+        it("from Minter if token owned by another account", async () => {
             await expect(
-                NFTContract.connect(addr2).burn(tokenId)
+                NFTContract.connect(owner).burn(tokenId)
             ).to.be.revertedWith(
                 "VM Exception while processing transaction: reverted with reason string 'ERC721Burnable: caller is not owner nor approved"
             );
         });
-        it("from approved account", async () => {
-            await NFTContract.connect(addr1).approve(addr2.address, tokenId);
-            await NFTContract.connect(addr2).burn(tokenId);
+        it("from owning account and not Minter", async () => {
             await expect(
-                NFTContract.connect(owner).ownerOf(tokenId)
-            ).to.be.revertedWith("ERC721: owner query for nonexistent token");
+                NFTContract.connect(addr1).burn(tokenId)
+            ).to.be.revertedWith(
+                "AccessControl: account 0x70997970c51812dc3a010c7d01b50e0d17dc79c8 " +
+                    "is missing role 0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6"
+            );
         });
     });
     describe("token approve and transfer methods", () => {
