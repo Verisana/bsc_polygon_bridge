@@ -9,7 +9,7 @@ You must have `node>=14`
 3. Fill all variables as instructed
 4. `npm run test` - to test main functionality
 
-**Заметка для проверяющего:**
+**Пояснения для проверяющего:**
 
 1. На выполнение задания ушло примерно 25 часов чистого времени по таймеру
 2. Дописан, но выявлен неустраненный баг в `task` `send_nft`
