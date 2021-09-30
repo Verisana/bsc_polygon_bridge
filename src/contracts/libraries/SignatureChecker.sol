@@ -24,14 +24,27 @@ library SignatureChecker {
         bytes32 r,
         bytes32 s
     ) internal view returns (bool) {
-        (address recovered, ECDSA.RecoverError error) = ECDSA.tryRecover(hash, v, r, s);
+        (address recovered, ECDSA.RecoverError error) = ECDSA.tryRecover(
+            hash,
+            v,
+            r,
+            s
+        );
         if (error == ECDSA.RecoverError.NoError && recovered == signer) {
             return true;
         }
 
         (bool success, bytes memory result) = signer.staticcall(
-            abi.encodeWithSelector(IERC1271.isValidSignature.selector, hash, v, r, s)
+            abi.encodeWithSelector(
+                IERC1271.isValidSignature.selector,
+                hash,
+                v,
+                r,
+                s
+            )
         );
-        return (success && result.length == 32 && abi.decode(result, (bytes4)) == IERC1271.isValidSignature.selector);
+        return (success &&
+            result.length == 32 &&
+            abi.decode(result, (bytes4)) == IERC1271.isValidSignature.selector);
     }
 }
