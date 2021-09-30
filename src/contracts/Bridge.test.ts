@@ -8,6 +8,7 @@ import { deploy } from "../utils/deploy";
 import { resetBlockchain, mintNFTs } from "../utils/blockchain_utils";
 import { Bridge, NFT } from "../../dist/contracts/typechain";
 import { ChainName, ISwapDetail } from "../types";
+import { Validator } from "../validator";
 
 dotenv.config();
 const ethersHRE = hre.ethers;
@@ -17,7 +18,7 @@ describe("Test Bridge contract", () => {
     let addr1: SignerWithAddress;
     let addr2: SignerWithAddress;
 
-    // This is pseudo "chains". It operates in one chain, but try to mimic two
+    // These are pseudo "chains". It operates in one chain, but try to mimic two
     // chain operation
     let BridgeContractBSC: Bridge;
     let BridgeContractPolygon: Bridge;
@@ -26,6 +27,7 @@ describe("Test Bridge contract", () => {
     let tokenId: ethers.BigNumber;
     let swapDetails: ISwapDetail;
     let signature: ethers.Signature;
+    let validator: Validator;
 
     beforeEach(async () => {
         await resetBlockchain(hre);
@@ -53,6 +55,7 @@ describe("Test Bridge contract", () => {
             BridgeContractPolygon.address
         );
         tokenId = await NFTContractBSC.tokenOfOwnerByIndex(addr1.address, 0);
+        validator = new Validator(owner, BridgeContractBSC);
     });
 
     describe("init swap method", () => {
@@ -135,10 +138,10 @@ describe("Test Bridge contract", () => {
             nonce: 0,
             isValue: true
         };
-        console.log(swapDetails.tokenId.toString());
-        const swapHash = await BridgeContractPolygon.calculateHash(swapDetails);
-        const signaturePlain = await addr2.signMessage(swapHash);
-        const wrongSignature = ethers.utils.splitSignature(signaturePlain);
+        const wrongValidator = new Validator(addr2, BridgeContractBSC);
+        const wrongSignature = await wrongValidator._validateInitSwap(
+            swapDetails
+        );
         await expect(
             BridgeContractPolygon.connect(addr2).redeemSwap(
                 swapDetails.sender,
@@ -160,24 +163,10 @@ describe("Test Bridge contract", () => {
                 tokenId
             );
             await BridgeContractBSC.connect(addr1).initSwap(tokenId);
-            const initSwapFilter = BridgeContractBSC.filters.InitSwap();
-            const events = await BridgeContractBSC.queryFilter(
-                initSwapFilter,
-                "latest"
+            swapDetails = Validator.createSwapDetail(
+                await Validator.queryInitSwapEvent(BridgeContractBSC)
             );
-            swapDetails = {
-                sender: events[0].args[0],
-                tokenId: events[0].args[1],
-                chainFrom: events[0].args[2],
-                chainTo: events[0].args[3],
-                nonce: events[0].args[4],
-                isValue: true
-            };
-            const swapHash = await BridgeContractPolygon.calculateHash(
-                swapDetails
-            );
-            const signaturePlain = await owner.signMessage(swapHash);
-            signature = ethers.utils.splitSignature(signaturePlain);
+            signature = await validator.validateInitSwap();
         });
 
         it("by third-party account with valid sign", async () => {
@@ -191,7 +180,6 @@ describe("Test Bridge contract", () => {
                 signature.r,
                 signature.s
             );
-            console.log(0);
         });
         it("and revert if tried to redeem with wrong arguments", async () => {
             await expect(
@@ -233,7 +221,9 @@ describe("Test Bridge contract", () => {
                     signature.r,
                     signature.s
                 )
-            ).to.be.revertedWith("redeemSwap: invalid signature");
+            ).to.be.revertedWith(
+                "VM Exception while processing transaction: reverted with reason string 'Token must be owned by Bridge'"
+            );
         });
         it("redeem event emitted", async () => {
             await BridgeContractPolygon.connect(addr2).redeemSwap(
@@ -246,10 +236,9 @@ describe("Test Bridge contract", () => {
                 signature.r,
                 signature.s
             );
-
-            const initSwapFilter = BridgeContractBSC.filters.InitSwap();
-            const events = await BridgeContractBSC.queryFilter(
-                initSwapFilter,
+            const redeemSwapFilter = BridgeContractPolygon.filters.RedeemSwap();
+            const events = await BridgeContractPolygon.queryFilter(
+                redeemSwapFilter,
                 "latest"
             );
 
