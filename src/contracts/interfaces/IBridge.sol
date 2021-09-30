@@ -32,8 +32,6 @@ interface IBridge {
         uint256 nonce
     );
 
-    event FinalizeSwap(bytes32 hashEvent);
-
     function initSwap(uint256 tokenId) external payable;
 
     function redeemSwap(
