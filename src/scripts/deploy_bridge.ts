@@ -13,16 +13,25 @@ const polygonNFTAddress = getEnvVariable("POLYGON_NFT_ADDRESS");
 async function main() {
     const contractName = "Bridge";
 
-    let contract;
+    let address: string;
     if (hre.network.name === "testnet") {
-        contract = await deploy(contractName, binanceNFTAddress, 0);
+        address = binanceNFTAddress;
     } else if (hre.network.name === "mumbai") {
-        contract = await deploy(contractName, polygonNFTAddress, 1);
+        address = polygonNFTAddress;
     } else {
         throw new Error(
             `Unknown network "${hre.network.name}" to deploy ${contractName}`
         );
     }
+    const contract = await deploy(
+        contractName,
+        (
+            await hre.ethers.getSigners()
+        )[0],
+        address,
+        0
+    );
+
     console.log(
         `${contractName} deployed on ${hre.network.name} to: ${contract.address}`
     );

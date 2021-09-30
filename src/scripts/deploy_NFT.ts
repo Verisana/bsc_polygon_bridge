@@ -4,7 +4,12 @@ import { deploy } from "../utils/deploy";
 
 async function main() {
     const contractName = "NFT";
-    const contract = await deploy(contractName);
+    const contract = await deploy(
+        contractName,
+        (
+            await hre.ethers.getSigners()
+        )[0]
+    );
     console.log(
         `${contractName} deployed on ${hre.network.name} to: ${contract.address}`
     );

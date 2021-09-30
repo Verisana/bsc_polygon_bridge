@@ -32,17 +32,19 @@ describe("Test Bridge contract", () => {
     beforeEach(async () => {
         await resetBlockchain(hre);
         [owner, addr1, addr2] = await ethersHRE.getSigners();
-        NFTContractBSC = (await deploy("NFT")) as NFT;
-        NFTContractPolygon = (await deploy("NFT")) as NFT;
+        NFTContractBSC = (await deploy("NFT", owner)) as NFT;
+        NFTContractPolygon = (await deploy("NFT", owner)) as NFT;
 
         BridgeContractBSC = (await deploy(
             "Bridge",
+            owner,
             NFTContractBSC.address,
             ChainName.BSC
         )) as Bridge;
 
         BridgeContractPolygon = (await deploy(
             "Bridge",
+            owner,
             NFTContractPolygon.address,
             ChainName.POLYGON
         )) as Bridge;
@@ -180,6 +182,9 @@ describe("Test Bridge contract", () => {
                 signature.r,
                 signature.s
             );
+            expect(
+                await NFTContractPolygon.ownerOf(swapDetails.tokenId)
+            ).to.be.equal(swapDetails.sender);
         });
         it("and revert if tried to redeem with wrong arguments", async () => {
             await expect(
@@ -225,7 +230,7 @@ describe("Test Bridge contract", () => {
                 "VM Exception while processing transaction: reverted with reason string 'Token must be owned by Bridge'"
             );
         });
-        it("redeem event emitted", async () => {
+        it("check emitted event", async () => {
             await BridgeContractPolygon.connect(addr2).redeemSwap(
                 swapDetails.sender,
                 swapDetails.tokenId,
@@ -252,7 +257,7 @@ describe("Test Bridge contract", () => {
                 swapDetails.nonce.toString()
             );
         });
-        it("check eventStore", async () => {
+        it("check eventStore value", async () => {
             await BridgeContractPolygon.connect(addr2).redeemSwap(
                 swapDetails.sender,
                 swapDetails.tokenId,
