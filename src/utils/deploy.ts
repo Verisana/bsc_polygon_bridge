@@ -6,7 +6,7 @@ export async function deploy(
     ...args: unknown[]
 ): Promise<Contract> {
     const ContractFactory = await hre.ethers.getContractFactory(contractName);
-    const contract = await ContractFactory.deploy(args);
+    const contract = await ContractFactory.deploy(...args);
     await contract.deployed();
     return contract;
 }
