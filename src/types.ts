@@ -13,3 +13,17 @@ export interface ISwapDetail {
     nonce: ethers.BigNumberish;
     isValue: boolean;
 }
+
+export type EventType = [
+    string,
+    ethers.BigNumber,
+    number,
+    number,
+    ethers.BigNumber
+] & {
+    sender: string;
+    tokenId: ethers.BigNumber;
+    chainFrom: number;
+    chainTo: number;
+    nonce: ethers.BigNumber;
+};
