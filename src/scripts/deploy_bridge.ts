@@ -15,9 +15,9 @@ async function main() {
 
     let contract;
     if (hre.network.name === "testnet") {
-        contract = await deploy(contractName, binanceNFTAddress, "BSC");
+        contract = await deploy(contractName, binanceNFTAddress, 0);
     } else if (hre.network.name === "mumbai") {
-        contract = await deploy(contractName, polygonNFTAddress, "POLYGON");
+        contract = await deploy(contractName, polygonNFTAddress, 1);
     } else {
         throw new Error(
             `Unknown network "${hre.network.name}" to deploy ${contractName}`
