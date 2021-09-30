@@ -1,5 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { ethers } from "ethers";
+
 import { NFT } from "../../dist/contracts/typechain";
 
 export async function resetBlockchain(
@@ -50,4 +52,12 @@ export async function mintNFTs(
                 "deployed by another account. Check addresses"
         );
     }
+}
+
+export async function getContract(
+    name: string,
+    address: string,
+    hre: HardhatRuntimeEnvironment
+): Promise<ethers.Contract> {
+    return hre.ethers.getContractAt(name, address);
 }

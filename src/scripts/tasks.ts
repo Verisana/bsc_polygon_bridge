@@ -16,13 +16,6 @@ const polygonNFTAddress = getEnvVariable("POLYGON_NFT_ADDRESS");
 
 const polygonBridgeAddress = getEnvVariable("POLYGON_BRIDGE_ADDRESS");
 
-async function getNFTContract(
-    address: string,
-    hre: HardhatRuntimeEnvironment
-): Promise<NFT> {
-    return (await hre.ethers.getContractAt("NFT", address)) as NFT;
-}
-
 task("mint_nft", "Mint 10 NFT tokens on specified network")
     .addParam("amount", "The amount of NFT to mint", "10")
     .addParam(
@@ -52,11 +45,19 @@ task("mint_nft", "Mint 10 NFT tokens on specified network")
             let NFTContract;
             if (taskArgs.currentNetwork === "mumbai") {
                 taskArgs.to = polygonBridgeAddress;
-                NFTContract = await getNFTContract(polygonNFTAddress, hre);
+                NFTContract = (await getContract(
+                    "NFT",
+                    polygonNFTAddress,
+                    hre
+                )) as NFT;
 
                 // Binance Smart Chain Testnet
             } else if (taskArgs.currentNetwork === "testnet") {
-                NFTContract = await getNFTContract(binanceNFTAddress, hre);
+                NFTContract = (await getContract(
+                    "NFT",
+                    binanceNFTAddress,
+                    hre
+                )) as NFT;
             } else {
                 throw new Error("This task doesn't work on that network");
             }
