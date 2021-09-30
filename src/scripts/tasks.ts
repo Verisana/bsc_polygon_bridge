@@ -4,8 +4,10 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import * as dotenv from "dotenv";
 
 import { getEnvVariable } from "../utils/utils";
-import { mintNFTs } from "../utils/blockchain_utils";
-import { NFT } from "../../dist/contracts/typechain";
+import { mintNFTs, getContract } from "../utils/blockchain_utils";
+import { Bridge, NFT } from "../../dist/contracts/typechain";
+import { ChainName } from "../types";
+import { Validator } from "../validator";
 
 // Although dotenv.config() was called in hardhat.configs.ts, it must be called here too,
 // because we import tasks before calling the dotenv.config()
@@ -14,6 +16,7 @@ dotenv.config();
 const binanceNFTAddress = getEnvVariable("BSC_NFT_ADDRESS");
 const polygonNFTAddress = getEnvVariable("POLYGON_NFT_ADDRESS");
 
+const binanceBridgeAddress = getEnvVariable("BSC_BRIDGE_ADDRESS");
 const polygonBridgeAddress = getEnvVariable("POLYGON_BRIDGE_ADDRESS");
 
 task("mint_nft", "Mint 10 NFT tokens on specified network")
@@ -70,6 +73,94 @@ task("mint_nft", "Mint 10 NFT tokens on specified network")
         }
     );
 
-task("send_nft", "Send NFT tokens from one blockchain to another")
-    .addParam("from")
-    .addParam("to");
+task("swap_nft", "Swap NFT token from one blockchain to another")
+    .addParam("sender", "1")
+    .addParam("chainFrom", "0")
+    .addParam("tokenID", "")
+    .setAction(
+        async (
+            taskArgs: Record<string, string>,
+            hre: HardhatRuntimeEnvironment
+        ) => {
+            const accounts = await hre.ethers.getSigners();
+
+            const sender = accounts[Number(taskArgs.sender)];
+            const chainFrom = Number(taskArgs.chainFrom);
+            const chainTo = chainFrom === 0 ? 1 : 0;
+
+            let bridgeAddressFrom = binanceBridgeAddress;
+            let NFTAddressFrom = binanceNFTAddress;
+
+            let bridgeAddressTo = polygonBridgeAddress;
+
+            if (chainFrom === ChainName.POLYGON) {
+                bridgeAddressFrom = polygonBridgeAddress;
+                NFTAddressFrom = polygonNFTAddress;
+
+                bridgeAddressTo = binanceBridgeAddress;
+            }
+
+            const NFTContractFrom = (await getContract(
+                "NFT",
+                NFTAddressFrom,
+                hre
+            )) as NFT;
+
+            const BridgeContractFrom = (await getContract(
+                "Bridge",
+                bridgeAddressFrom,
+                hre
+            )) as Bridge;
+
+            const BridgeContractTo = (await getContract(
+                "Bridge",
+                bridgeAddressTo,
+                hre
+            )) as Bridge;
+
+            const tokenId =
+                taskArgs.tokenId === ""
+                    ? await NFTContractFrom.tokenOfOwnerByIndex(
+                          sender.address,
+                          0
+                      )
+                    : hre.ethers.BigNumber.from(taskArgs.tokenId);
+
+            await NFTContractFrom.connect(sender).approve(
+                BridgeContractFrom.address,
+                tokenId
+            );
+            console.log(
+                `Approved ${tokenId} to ${BridgeContractFrom.address} ` +
+                    `from ${sender.address}`
+            );
+            await BridgeContractFrom.connect(sender).initSwap(tokenId);
+            console.log(
+                `Token ${tokenId} was sent from ${sender.address}` +
+                    ` to Bridge ${chainFrom}`
+            );
+
+            // The Redeem Phase start !!!
+
+            const validator = new Validator(accounts[0], BridgeContractFrom);
+            const event = await Validator.queryInitSwapEvent(
+                BridgeContractFrom
+            );
+            const swapDetail = Validator.createSwapDetail(event);
+            const signature = await validator.validateInitSwap(event);
+
+            await BridgeContractTo.connect(sender).redeemSwap(
+                swapDetail.sender,
+                swapDetail.tokenId,
+                swapDetail.chainFrom,
+                swapDetail.chainTo,
+                swapDetail.nonce,
+                signature.v,
+                signature.r,
+                signature.s
+            );
+            console.log(
+                `Token ${tokenId} successfully redeemed by ${sender.address} on ${ChainName[chainTo]}`
+            );
+        }
+    );
