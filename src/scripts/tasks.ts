@@ -8,6 +8,7 @@ import { getContract, mintNFTs } from "../utils/blockchain_utils";
 import { Bridge, NFT } from "../../dist/contracts/typechain";
 import { ChainName, ISwapDetail } from "../types";
 import { Validator } from "../validator";
+import { ethers } from "hardhat";
 
 // Although dotenv.config() was called in hardhat.configs.ts, it must be called here too,
 // because we import tasks before calling the dotenv.config()
@@ -19,7 +20,7 @@ const polygonNFTAddress = getEnvVariable("POLYGON_NFT_ADDRESS");
 const binanceBridgeAddress = getEnvVariable("BSC_BRIDGE_ADDRESS");
 const polygonBridgeAddress = getEnvVariable("POLYGON_BRIDGE_ADDRESS");
 
-task("mint_nft", "Mint 10 NFT tokens on specified network")
+task("mint_nft", "Mint NFT tokens of specified amount on network")
     .addParam("amount", "The amount of NFT to mint", "10")
     .addParam(
         "currentnetwork",
@@ -106,6 +107,10 @@ task("send_nft", "Send NFT token to Bridge contract from the source blockchain")
 
             const accounts = await hre.ethers.getSigners();
             const sender = accounts[Number(taskArgs.sender)];
+
+            if ((await sender.getBalance()).eq(0))
+                throw new Error(`Sender ${sender.address} must have funds!`);
+
             const NFTContract = (await getContract(
                 "NFT",
                 NFTAddress,
@@ -128,12 +133,15 @@ task("send_nft", "Send NFT token to Bridge contract from the source blockchain")
                     `from ${sender.address}`
             );
             await BridgeContract.connect(sender).initSwap(tokenId);
-            const nonce = await BridgeContract.callStatic.nonceStore(
-                sender.address
-            );
+
+            // Receive incremented nonce. So, to obtain the past one related to
+            // transaction, subtract 1
+            const nonce = (
+                await BridgeContract.callStatic.nonceStore(sender.address)
+            ).sub(1);
             console.log(
                 `Token ${tokenId} was sent from ${sender.address}` +
-                    ` to Bridge ${chainFrom} with nonce ${nonce}`
+                    ` to Bridge ${chainFrom} with nonce ${nonce.toString()}`
             );
         }
     );
@@ -165,6 +173,9 @@ task("redeem_nft", "Redeem NFT token from the second blockchain")
             const accounts = await hre.ethers.getSigners();
 
             const sender = accounts[Number(taskArgs.sender)];
+
+            if ((await sender.getBalance()).eq(0))
+                throw new Error(`Sender ${sender.address} must have funds!`);
 
             const nonce = Number(taskArgs.nonce);
 
